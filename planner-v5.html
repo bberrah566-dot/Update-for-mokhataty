@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مخططي الأسبوعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:    #f5f0e8;
+  --paper2:   #ede8dc;
+  --paper3:   #e4ddd0;
+  --ink:      #2c2416;
+  --ink2:     #4a3f2f;
+  --ink3:     #6b5d48;
+  --faint:    #b8ae9c;
+  --line:     #d4cbb8;
+  --red:      #c0392b;
+  --red-s:    #f0ddd8;
+  --blue:     #2c5f8a;
+  --blue-s:   #d0dce8;
+  --green:    #2d6a4f;
+  --green-s:  #d0e8dc;
+  --gold:     #a07800;
+  --gold-s:   #f0e8c0;
+  --shadow:   2px 4px 16px rgba(44,36,22,.13);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: #1e1810;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px 12px 40px;
+  color: var(--ink);
+}
+
+/* ── NOTEBOOK ── */
+.notebook {
+  width: 100%;
+  max-width: 520px;
+  background: var(--paper);
+  border-radius: 6px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ruled lines texture */
+.notebook::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    transparent, transparent 27px,
+    rgba(180,168,148,.28) 27px, rgba(180,168,148,.28) 28px
+  );
+  pointer-events: none; z-index: 0;
+}
+
+/* Red margin */
+.notebook::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; right: 54px;
+  width: 1.5px;
+  background: rgba(192,57,43,.18);
+  pointer-events: none; z-index: 1;
+}
+
+/* ── HEADER ── */
+.nb-header {
+  position: relative; z-index: 2;
+  background: var(--paper2);
+  border-bottom: 2px solid var(--line);
+  padding: 16px 18px 12px;
+}
+
+.nb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.nb-title {
+  font-family: 'Amiri', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.nb-title span { color: var(--red); }
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.week-nav button {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--faint);
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink3);
+  transition: all .18s;
+  display: flex; align-items: center; justify-content: center;
+}
+.week-nav button:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+#weekLabel {
+  font-size: 12px; color: var(--ink2); font-weight: 600;
+  min-width: 120px; text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── TABS ── */
+.nb-tabs {
+  position: relative; z-index: 2;
+  display: flex;
+  background: var(--paper3);
+  border-bottom: 2px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nb-tabs::-webkit-scrollbar { display: none; }
+.nb-tab {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink3);
+  cursor: pointer;
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
+  transition: all .18s;
+  position: relative;
+}
+.nb-tab:first-child { border-left: none; }
+.nb-tab:hover { color: var(--ink); background: rgba(255,255,255,.3); }
+.nb-tab.active {
+  color: var(--ink);
+  background: var(--paper);
+  font-weight: 700;
+}
+.nb-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 2px; background: var(--red);
+}
+
+/* ── PAGES ── */
+.page { display: none; position: relative; z-index: 2; }
+.page.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══════════════════
+   WEEKLY PLAN PAGE
+══════════════════ */
+.plan-page { padding: 18px 16px 18px 64px; }
+
+.section-heading {
+  font-family: 'Amiri', serif;
+  font-size: 15px; font-weight: 700;
+  color: var(--ink2);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-heading::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--line);
+}
+
+.priority-block { margin-bottom: 18px; }
+.priority-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .8px; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-bottom: 8px;
+}
+.pl-essential { background: var(--red-s); color: var(--red); border: 1px solid rgba(192,57,43,.25); }
+.pl-medium    { background: var(--blue-s); color: var(--blue); border: 1px solid rgba(44,95,138,.25); }
+.pl-low       { background: var(--paper3); color: var(--ink3); border: 1px solid var(--line); }
+
+/* ── TASK LIST ── */
+.task-list { list-style: none; }
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  border-bottom: 1px dashed rgba(180,168,148,.4);
+  transition: background .15s;
+  cursor: pointer;
+  position: relative;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item:hover { background: rgba(255,255,255,.5); }
+
+/* Checkbox */
+.task-cb {
+  width: 15px; height: 15px;
+  border: 1.5px solid var(--faint);
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  transition: all .15s;
+  background: transparent;
+}
+.task-item.done .task-cb {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+  position: relative;
+  transition: color .2s;
+}
+/* Strikethrough scratch effect */
+.task-item.done .task-text {
+  color: var(--faint);
+}
+.task-item.done .task-text::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: -2px; right: -2px;
+  height: 1.5px;
+  background: var(--ink3);
+  transform: rotate(-0.5deg);
+}
+
+.task-pts {
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-s);
+  border: 1px solid rgba(160,120,0,.2);
+  border-radius: 8px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.task-del {
+  font-size: 13px; color: var(--faint);
+  opacity: 0; transition: opacity .15s;
+  cursor: pointer; flex-shrink: 0; padding: 0 2px;
+}
+.task-item:hover .task-del { opacity: 1; }
+.task-del:hover { color: var(--red); }
+
+/* Add task row */
+.add-task-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 6px; padding: 4px 6px;
+  border: 1px dashed var(--faint);
+  border-radius: 6px;
+  background: rgba(255,255,255,.3);
+}
+.add-task-row input[type=text] {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px; color: var(--ink); outline: none;
+}
+.add-task-row input[type=text]::placeholder { color: var(--faint); }
+.pts-inp {
+  width: 30px; border: 1px solid var(--line);
+  border-radius: 4px; background: var(--paper);
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--gold); font-weight: 700;
+  text-align: center; outline: none; padding: 2px 3px;
+}
+.add-btn {
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: 5px;
+  width: 22px; height: 22px;
+  font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .15s; flex-shrink: 0;
+}
+.add-btn:hover { opacity: .75; }
+
+/* ══════════════════
+   DAYS PAGE
+══════════════════ */
+.days-page { padding: 14px 16px 14px 64px; }
+
+.day-block {
+  background: var(--paper2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.day-block:hover { box-shadow: var(--shadow); }
+.day-block.today { border-color: var(--red); border-width: 2px; }
+
+.day-block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--paper3);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  user-select: none;
+}
+.day-block.today .day-block-header { background: var(--red); }
+.day-block.today .day-name-ar,
+.day-block.today .day-date-str { color: white; }
+.day-block.today .day-score-badge { background: rgba(255,255,255,.2); color: white; border-color: rgba(255,255,255,.4); }
+
+.day-name-ar {
+  font-family: 'Amiri', serif;
+  font-size: 16px; font-weight: 700; color: var(--ink);
+}
+.day-date-str {
+  font-size: 10px; color: var(--ink3);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.day-score-badge {
+  font-size: 11px; font-weight: 700;
+  background: var(--gold-s); color: var(--gold);
+  border: 1px solid rgba(160,120,0,.3);
+  border-radius: 10px; padding: 2px 8px;
+  cursor: pointer; transition: all .15s;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.day-score-badge:hover { background: var(--gold); color: white; }
+
+.day-collapse-btn {
+  font-size: 11px; color: var(--faint);
+  margin-right: 4px; transition: transform .2s;
+}
+.day-block.collapsed .day-collapse-btn { transform: rotate(-90deg); }
+
+.day-body { padding: 8px 10px; }
+.day-block.collapsed .day-body { display: none; }
+
+/* ══════════════════
+   HABIT TRACKER PAGE
+══════════════════ */
+.habits-page { padding: 16px 16px 16px 64px; }
+
+.habit-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper2);
+  margin-bottom: 16px;
+}
+
+.habit-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 320px;
+}
+.habit-table th {
+  padding: 8px 6px;
+  font-size: 11px; font-weight: 700;
+  color: var(--ink3);
+  background: var(--paper3);
+  border-bottom: 1.5px solid var(--line);
+  text-align: center;
+}
+.habit-table th:first-child { text-align: right; padding-right: 12px; width: 40%; }
+.habit-table td {
+  padding: 6px 4px;
+  border-bottom: 1px dashed rgba(180,168,148,.35);
+  text-align: center;
+  vertical-align: middle;
+}
+.habit-table td:first-child {
+  text-align: right; padding-right: 12px;
+  font-size: 13px; color: var(--ink2);
+}
+.habit-table tr:last-child td { border-bottom: none; }
+.habit-table tr:hover td { background: rgba(255,255,255,.4); }
+
+/* X mark cell */
+.habit-cell {
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto;
+  font-size: 14px; font-weight: 700;
+  color: transparent;
+  transition: all .15s;
+  user-select: none;
+}
+.habit-cell:hover { border-color: var(--ink3); background: var(--paper3); }
+.habit-cell.marked {
+  background: var(--green-s);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* Delete habit btn */
+.habit-del {
+  font-size: 12px; color: var(--faint);
+  cursor: pointer; padding: 0 4px;
+  transition: color .15s;
+}
+.habit-del:hover { color: var(--red); }
+
+.habit-row-label {
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* Add habit form */
+.add-habit-form {
+  display: flex; gap: 8px; align-items: center;
+}
+.add-habit-form input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper2);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px; color: var(--ink);
+  padding: 9px 12px; outline: none;
+  transition: border-color .15s;
+}
+.add-habit-form input:focus { border-color: var(--ink3); }
+.add-habit-form button {
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: 8px;
+  padding: 9px 16px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity .15s;
+}
+.add-habit-form button:hover { opacity: .8; }
+
+/* Habit week summary */
+.habit-summary {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 10px;
+}
+.habit-chip {
+  font-size: 11px; padding: 3px 9px;
+  border-radius: 12px;
+  background: var(--green-s);
+  color: var(--green);
+  border: 1px solid rgba(45,106,79,.2);
+  font-weight: 600;
+}
+
+/* ══════════════════
+   STATS PAGE
+══════════════════ */
+.stats-page { padding: 16px 16px 16px 64px; }
+
+.bar-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.bar-day { width: 36px; font-size: 11px; font-weight: 700; color: var(--ink3); text-align: right; flex-shrink: 0; }
+.bar-track {
+  flex: 1; height: 18px;
+  background: var(--paper3);
+  border: 1px solid var(--line);
+  border-radius: 3px; overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  transition: width .5s ease;
+  border-radius: 2px;
+  background: repeating-linear-gradient(45deg, var(--ink2), var(--ink2) 3px, var(--paper3) 3px, var(--paper3) 7px);
+}
+.bar-fill.hi { background: repeating-linear-gradient(45deg,var(--green),var(--green) 3px,var(--green-s) 3px,var(--green-s) 7px); }
+.bar-fill.md { background: repeating-linear-gradient(45deg,var(--gold),var(--gold) 3px,var(--gold-s) 3px,var(--gold-s) 7px); }
+.bar-fill.lo { background: repeating-linear-gradient(45deg,var(--red),var(--red) 3px,var(--red-s) 3px,var(--red-s) 7px); }
+.bar-val { font-size: 10px; font-weight: 700; color: var(--ink2); width: 30px; font-family: 'IBM Plex Mono', monospace; flex-shrink: 0; }
+
+/* Sleep */
+.sleep-section { margin-top: 20px; }
+.sleep-canvas-wrap {
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--paper2); padding: 10px; margin: 10px 0;
+}
+canvas#sleepCanvas { width: 100%; height: 120px; display: block; }
+
+.sleep-inputs {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-top: 8px;
+}
+.si-col { text-align: center; }
+.si-col label { font-size: 9px; font-weight: 700; color: var(--ink3); display: block; margin-bottom: 3px; }
+.si-col input {
+  width: 100%; border: 1px solid var(--line); border-radius: 3px;
+  background: var(--paper); font-size: 9px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-align: center; outline: none; padding: 2px 1px; color: var(--ink);
+  margin-bottom: 2px;
+}
+.si-col input:focus { border-color: var(--blue); }
+.si-hrs { font-size: 10px; font-weight: 700; color: var(--blue); font-family: 'IBM Plex Mono', monospace; }
+
+/* ══════════════════
+   REVIEW PAGE
+══════════════════ */
+.review-page { padding: 16px 16px 16px 64px; }
+
+.review-card {
+  background: var(--paper2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px; margin-bottom: 14px;
+}
+.review-card-title {
+  font-family: 'Amiri', serif;
+  font-size: 14px; font-weight: 700;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--line);
+}
+.review-item {
+  display: flex; gap: 6px; align-items: flex-start; margin-bottom: 7px;
+}
+.review-bullet { font-size: 13px; flex-shrink: 0; margin-top: 1px; color: var(--faint); }
+.review-inp {
+  flex: 1; border: none;
+  border-bottom: 1px dashed var(--faint);
+  background: transparent;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px; color: var(--ink);
+  outline: none; padding: 2px 0; width: 100%;
+}
+.review-inp::placeholder { color: var(--faint); }
+.add-review-btn {
+  background: none; border: 1px dashed var(--faint);
+  border-radius: 5px; width: 100%; padding: 5px;
+  cursor: pointer; font-size: 12px; color: var(--faint);
+  font-family: 'Tajawal', sans-serif; margin-top: 4px;
+  transition: all .15s;
+}
+.add-review-btn:hover { border-color: var(--ink3); color: var(--ink3); }
+
+/* ══════════════════
+   SIDE TASKS PAGE
+══════════════════ */
+.side-page { padding: 16px 16px 16px 64px; }
+.side-cat { background: var(--paper2); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.side-cat-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--ink2); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+
+/* ══════════════════
+   INVEST PAGE
+══════════════════ */
+.invest-page { padding: 16px 16px 16px 64px; }
+
+.invest-nav {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+.invest-nav button {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--faint); background: var(--paper);
+  cursor: pointer; font-size: 13px; color: var(--ink3);
+  transition: all .18s; display: flex; align-items: center; justify-content: center;
+}
+.invest-nav button:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.month-label {
+  flex: 1; text-align: center; font-family: 'Amiri', serif;
+  font-size: 17px; font-weight: 700; color: var(--ink);
+}
+
+.invest-summary {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.inv-stat {
+  flex: 1; background: var(--paper2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 6px; text-align: center;
+}
+.inv-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px; font-weight: 700; color: var(--gold);
+}
+.inv-lbl { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+
+.invest-cal-header {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  margin-bottom: 4px;
+}
+.invest-cal-header span {
+  text-align: center; font-size: 10px; font-weight: 700;
+  color: var(--ink3); padding: 3px 0;
+}
+
+.invest-cal {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  gap: 4px;
+}
+.inv-day {
+  aspect-ratio: 1;
+  border: 1.5px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper2);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s;
+  position: relative; user-select: none;
+}
+.inv-day:hover { border-color: var(--ink3); background: var(--paper3); }
+.inv-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.inv-day.today-inv { border-color: var(--gold); border-width: 2px; }
+.inv-day.future { opacity: .4; cursor: default; }
+.inv-day-num {
+  font-size: 12px; font-weight: 600; color: var(--ink2);
+  line-height: 1;
+}
+.inv-day.paid .inv-day-num { color: var(--ink3); }
+.inv-x {
+  font-size: 16px; font-weight: 900; color: var(--red);
+  line-height: 1; margin-top: 1px;
+  display: none;
+}
+.inv-day.paid .inv-x { display: block; }
+.inv-day.paid { background: var(--red-s); border-color: var(--red); }
+
+/* ══════════════════
+   CUSTOM BARS PAGE
+══════════════════ */
+.bars-page { padding: 16px 16px 16px 64px; }
+
+.custom-bar-card {
+  background: var(--paper2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 14px; margin-bottom: 14px;
+}
+.cbar-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.cbar-name {
+  flex: 1; border: none; border-bottom: 1px dashed var(--faint);
+  background: transparent; font-family: 'Tajawal', sans-serif;
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  outline: none; padding: 2px 0;
+}
+.cbar-name::placeholder { color: var(--faint); font-weight: 400; }
+.cbar-pct {
+  font-size: 16px; font-weight: 900; color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace; min-width: 44px; text-align: left;
+}
+
+.cbar-track {
+  height: 22px; background: var(--paper3);
+  border: 1px solid var(--line); border-radius: 4px;
+  overflow: hidden; margin-bottom: 8px; cursor: pointer;
+  position: relative;
+}
+.cbar-fill {
+  height: 100%; border-radius: 3px; transition: width .3s ease;
+  background: repeating-linear-gradient(45deg,var(--ink2),var(--ink2) 3px,var(--paper3) 3px,var(--paper3) 7px);
+}
+.cbar-fill.hi { background: repeating-linear-gradient(45deg,var(--green),var(--green) 3px,var(--green-s) 3px,var(--green-s) 7px); }
+.cbar-fill.md { background: repeating-linear-gradient(45deg,var(--gold),var(--gold) 3px,var(--gold-s) 3px,var(--gold-s) 7px); }
+.cbar-fill.lo { background: repeating-linear-gradient(45deg,var(--red),var(--red) 3px,var(--red-s) 3px,var(--red-s) 7px); }
+
+.cbar-slider {
+  width: 100%; accent-color: var(--gold); cursor: pointer;
+}
+.cbar-note {
+  width: 100%; border: none; border-bottom: 1px dashed var(--faint);
+  background: transparent; font-family: 'Tajawal', sans-serif;
+  font-size: 12px; color: var(--ink3); outline: none;
+  padding: 4px 0; margin-top: 6px;
+}
+.cbar-note::placeholder { color: var(--faint); }
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(26,18,8,.55);
+  display: none; align-items: center; justify-content: center;
+  z-index: 300; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--paper); border-radius: 10px;
+  padding: 22px; width: 100%; max-width: 320px;
+  box-shadow: 0 20px 50px rgba(26,18,8,.25);
+}
+.modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.modal p { font-size: 12px; color: var(--ink3); margin-bottom: 14px; }
+.score-display {
+  font-size: 40px; font-weight: 900; color: var(--gold);
+  text-align: center; font-family: 'Amiri', serif; margin-bottom: 12px;
+}
+.score-slider { width: 100%; margin-bottom: 12px; accent-color: var(--gold); }
+.score-note {
+  width: 100%; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--paper2); font-family: 'Tajawal', sans-serif;
+  font-size: 13px; color: var(--ink); padding: 9px; outline: none;
+  resize: none; height: 65px; margin-bottom: 12px;
+}
+.modal-btns { display: flex; gap: 8px; }
+.modal-btns button {
+  flex: 1; padding: 9px; border-radius: 7px; border: none;
+  font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.btn-cancel { background: var(--paper2); color: var(--ink3); border: 1px solid var(--line) !important; }
+.btn-save { background: var(--ink); color: var(--paper); }
+</style>
+</head>
+<body>
+<div class="notebook">
+
+  <!-- Header -->
+  <div class="nb-header">
+    <div class="nb-top">
+      <div class="nb-title">مخططي <span>الأسبوعي</span></div>
+      <div class="week-nav">
+        <button onclick="changeWeek(-1)">◄</button>
+        <div id="weekLabel">—</div>
+        <button onclick="changeWeek(1)">►</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="nb-tabs">
+    <div class="nb-tab active"  onclick="sw('plan',this)">📋 الأسبوع</div>
+    <div class="nb-tab"         onclick="sw('days',this)">📅 الأيام</div>
+    <div class="nb-tab"         onclick="sw('habits',this)">✅ العادات</div>
+    <div class="nb-tab"         onclick="sw('stats',this)">📊 إحصاء</div>
+    <div class="nb-tab"         onclick="sw('invest',this)">💰 استثمار</div>
+    <div class="nb-tab"         onclick="sw('bars',this)">📏 أشرطتي</div>
+    <div class="nb-tab"         onclick="sw('review',this)">🗒️ مراجعة</div>
+    <div class="nb-tab"         onclick="sw('side',this)">🔀 جانبية</div>
+  </div>
+
+  <!-- ═══ PLAN ═══ -->
+  <div class="page active" id="page-plan">
+    <div class="plan-page">
+      <div class="section-heading">🎯 تخطيط الأسبوع الكامل</div>
+
+      <div class="priority-block">
+        <div class="priority-label pl-essential">🔴 أساسية</div>
+        <ul class="task-list" id="tl-essential"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="مهمة أساسية..." id="ti-essential" onkeydown="if(event.key==='Enter')addTask('essential')">
+          <input type="number" class="pts-inp" id="tp-essential" placeholder="نق" min="1" max="99">
+          <button class="add-btn" onclick="addTask('essential')">+</button>
+        </div>
+      </div>
+
+      <div class="priority-block">
+        <div class="priority-label pl-medium">🔵 متوسطة</div>
+        <ul class="task-list" id="tl-medium"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="مهمة متوسطة..." id="ti-medium" onkeydown="if(event.key==='Enter')addTask('medium')">
+          <input type="number" class="pts-inp" id="tp-medium" placeholder="نق" min="1" max="99">
+          <button class="add-btn" onclick="addTask('medium')">+</button>
+        </div>
+      </div>
+
+      <div class="priority-block">
+        <div class="priority-label pl-low">⚪ ثانوية</div>
+        <ul class="task-list" id="tl-low"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="مهمة ثانوية..." id="ti-low" onkeydown="if(event.key==='Enter')addTask('low')">
+          <input type="number" class="pts-inp" id="tp-low" placeholder="نق" min="1" max="99">
+          <button class="add-btn" onclick="addTask('low')">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DAYS ═══ -->
+  <div class="page" id="page-days">
+    <div class="days-page" id="daysContainer"></div>
+  </div>
+
+  <!-- ═══ HABITS ═══ -->
+  <div class="page" id="page-habits">
+    <div class="habits-page">
+      <div class="section-heading">✅ متابعة العادات الأسبوعية</div>
+      <div class="habit-table-wrap">
+        <table class="habit-table">
+          <thead>
+            <tr>
+              <th>العادة</th>
+              <th id="hh0">—</th><th id="hh1">—</th><th id="hh2">—</th>
+              <th id="hh3">—</th><th id="hh4">—</th><th id="hh5">—</th><th id="hh6">—</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="habitBody"></tbody>
+        </table>
+      </div>
+      <div class="habit-summary" id="habitSummary"></div>
+      <div class="add-habit-form" style="margin-top:14px">
+        <input type="text" id="newHabitInp" placeholder="اكتب عادة جديدة..." onkeydown="if(event.key==='Enter')addHabit()">
+        <button onclick="addHabit()">+ إضافة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATS ═══ -->
+  <div class="page" id="page-stats">
+    <div class="stats-page">
+      <div class="section-heading">📊 نتائج الأسبوع</div>
+      <div id="barsWrap"></div>
+      <div class="sleep-section">
+        <div class="section-heading">🌙 منحنى السهر</div>
+        <div class="sleep-canvas-wrap">
+          <canvas id="sleepCanvas" width="460" height="120"></canvas>
+        </div>
+        <div class="sleep-inputs" id="sleepInputs"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REVIEW ═══ -->
+  <div class="page" id="page-review">
+    <div class="review-page">
+      <div class="section-heading">🗒️ مراجعة الأسبوع</div>
+      <div class="review-card">
+        <div class="review-card-title" style="color:var(--green)">✅ أهداف حققتها</div>
+        <div id="rv-achieved"></div>
+        <button class="add-review-btn" onclick="addRv('achieved')">+ إضافة</button>
+      </div>
+      <div class="review-card">
+        <div class="review-card-title" style="color:var(--red)">❌ أخطاء ارتكبتها</div>
+        <div id="rv-mistakes"></div>
+        <button class="add-review-btn" onclick="addRv('mistakes')">+ إضافة</button>
+      </div>
+      <div class="review-card">
+        <div class="review-card-title" style="color:var(--blue)">💡 أشياء تعلمتها</div>
+        <div id="rv-learned"></div>
+        <button class="add-review-btn" onclick="addRv('learned')">+ إضافة</button>
+      </div>
+      <div class="review-card">
+        <div class="review-card-title" style="color:var(--gold)">📝 ملاحظات عامة</div>
+        <div id="rv-notes"></div>
+        <button class="add-review-btn" onclick="addRv('notes')">+ إضافة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SIDE ═══ -->
+  <div class="page" id="page-side">
+    <div class="side-page">
+      <div class="section-heading">🔀 مهام جانبية غير مخططة</div>
+      <div class="side-cat">
+        <div class="side-cat-title">🔍 أشياء للبحث</div>
+        <ul class="task-list" id="tl-research"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="موضوع للبحث..." id="ti-research" onkeydown="if(event.key==='Enter')addSide('research')">
+          <button class="add-btn" onclick="addSide('research')">+</button>
+        </div>
+      </div>
+      <div class="side-cat">
+        <div class="side-cat-title">🛒 مشتريات</div>
+        <ul class="task-list" id="tl-shopping"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="شيء للشراء..." id="ti-shopping" onkeydown="if(event.key==='Enter')addSide('shopping')">
+          <button class="add-btn" onclick="addSide('shopping')">+</button>
+        </div>
+      </div>
+      <div class="side-cat">
+        <div class="side-cat-title">⚡ طوارئ</div>
+        <ul class="task-list" id="tl-urgent"></ul>
+        <div class="add-task-row">
+          <input type="text" placeholder="مهمة طارئة..." id="ti-urgent" onkeydown="if(event.key==='Enter')addSide('urgent')">
+          <button class="add-btn" onclick="addSide('urgent')">+</button>
+        </div>
+      </div>
+
+      <!-- Clear button -->
+      <div style="margin-top:24px;padding-top:16px;border-top:1px dashed var(--line);text-align:center">
+        <button onclick="clearAllData()" style="background:none;border:1px dashed var(--red);border-radius:8px;padding:10px 20px;font-family:'Tajawal',sans-serif;font-size:13px;color:var(--red);cursor:pointer;">
+          🗑️ مسح جميع البيانات المحفوظة
+        </button>
+        <div style="font-size:11px;color:var(--faint);margin-top:6px">تستخدم هذا فقط عند الضرورة</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ INVEST ═══ -->
+  <div class="page" id="page-invest">
+    <div class="invest-page">
+      <div class="section-heading">💰 استثمار 20دج / يوم</div>
+
+      <!-- Month nav -->
+      <div class="invest-nav">
+        <button onclick="changeMonth(-1)">◄</button>
+        <div id="monthLabel" class="month-label">—</div>
+        <button onclick="changeMonth(1)">►</button>
+      </div>
+
+      <!-- Summary -->
+      <div class="invest-summary">
+        <div class="inv-stat">
+          <div class="inv-val" id="invPaid">0</div>
+          <div class="inv-lbl">يوم دفعت</div>
+        </div>
+        <div class="inv-stat">
+          <div class="inv-val" id="invTotal">0 دج</div>
+          <div class="inv-lbl">المجموع التراكمي</div>
+        </div>
+        <div class="inv-stat">
+          <div class="inv-val" id="invLeft">0</div>
+          <div class="inv-lbl">يوم متبقي</div>
+        </div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="invest-cal-header">
+        <span>أحد</span><span>إثن</span><span>ثلا</span><span>أرب</span><span>خمي</span><span>جمع</span><span>سبت</span>
+      </div>
+      <div class="invest-cal" id="investCal"></div>
+
+      <div style="font-size:11px;color:var(--faint);text-align:center;margin-top:10px">
+        اضغط على أي يوم لتسجيل دفع الـ 20دج ✕
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOM BARS ═══ -->
+  <div class="page" id="page-bars">
+    <div class="bars-page">
+      <div class="section-heading">📏 أشرطتي المخصصة</div>
+
+      <div id="customBarsWrap"></div>
+
+    </div>
+  </div>
+
+</div><!-- /notebook -->
+
+<!-- Score Modal -->
+<div class="modal-bg" id="scoreModal">
+  <div class="modal">
+    <h3 id="modalTitle">نتيجة اليوم</h3>
+    <p>حرّك الشريط لتحديد نتيجتك اليدوية</p>
+    <input type="range" class="score-slider" id="scoreSlider" min="0" max="100" value="0" oninput="updScore()">
+    <div class="score-display" id="scoreDisplay">0</div>
+    <textarea class="score-note" id="scoreNote" placeholder="ملاحظة عن يومك..."></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveScore()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+const DAYS_AR  = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const DAYS_SH  = ['أحد','إثن','ثلا','أرب','خمي','جمع','سبت'];
+const MONTHS   = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+let weekOffset = 0;
+let scoreTarget = null;
+let D = JSON.parse(localStorage.getItem('nbd3') || '{}');
+const save = () => localStorage.setItem('nbd3', JSON.stringify(D));
+
+const dk = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const wk = () => `w${weekOffset}`;
+const ew = () => { if(!D[wk()]) D[wk()]={}; };
+
+function getWeekDates() {
+  const now = new Date();
+  const sun = new Date(now);
+  sun.setDate(now.getDate() - now.getDay() + weekOffset*7);
+  sun.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(sun); d.setDate(sun.getDate()+i); return d; });
+}
+const isToday = d => { const n=new Date(); return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); };
+
+function changeWeek(delta) { weekOffset+=delta; renderAll(); }
+
+function updateWeekLabel() {
+  const ds = getWeekDates();
+  document.getElementById('weekLabel').textContent =
+    `${ds[0].getDate()}/${ds[0].getMonth()+1} — ${ds[6].getDate()}/${ds[6].getMonth()+1}`;
+}
+
+// ─── TASK LIST RENDERER ───
+function renderTaskList(containerId, tasks, toggleFn, deleteFn) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = tasks.map((t,i) => `
+    <li class="task-item ${t.done?'done':''}" onclick="${toggleFn}(${i})">
+      <div class="task-cb">${t.done?'✓':''}</div>
+      <span class="task-text">${t.text}</span>
+      ${t.pts ? `<span class="task-pts">${t.pts}نق</span>` : ''}
+      <span class="task-del" onclick="event.stopPropagation();${deleteFn}(${i})">✕</span>
+    </li>
+  `).join('') || '<li style="font-size:12px;color:var(--faint);padding:4px 6px">لا توجد مهام بعد...</li>';
+}
+
+// ─── PLAN PAGE ───
+function renderPlan() {
+  ew();
+  ['essential','medium','low'].forEach(lvl => {
+    const tasks = D[wk()][`pt_${lvl}`] || [];
+    renderTaskList(`tl-${lvl}`, tasks,
+      `togglePT_${lvl}`, `deletePT_${lvl}`);
+  });
+}
+['essential','medium','low'].forEach(lvl => {
+  window[`togglePT_${lvl}`] = i => { ew(); D[wk()][`pt_${lvl}`][i].done=!D[wk()][`pt_${lvl}`][i].done; save(); renderPlan(); };
+  window[`deletePT_${lvl}`] = i => { ew(); D[wk()][`pt_${lvl}`].splice(i,1); save(); renderPlan(); };
+});
+function addTask(lvl) {
+  const ti = document.getElementById(`ti-${lvl}`);
+  const tp = document.getElementById(`tp-${lvl}`);
+  if(!ti.value.trim()) return;
+  ew();
+  if(!D[wk()][`pt_${lvl}`]) D[wk()][`pt_${lvl}`]=[];
+  D[wk()][`pt_${lvl}`].push({text:ti.value.trim(), done:false, pts:parseInt(tp.value)||0});
+  ti.value=''; tp.value='';
+  save(); renderPlan();
+}
+
+// ─── DAYS PAGE ───
+function renderDays() {
+  const dates = getWeekDates();
+  const cont = document.getElementById('daysContainer');
+  cont.innerHTML = dates.map(d => {
+    const k = dk(d);
+    const tasks = D[k]?.tasks || [];
+    const score = D[k]?.score;
+    const pts = tasks.filter(t=>t.done).reduce((a,b)=>a+(b.pts||0),0);
+    return `
+      <div class="day-block ${isToday(d)?'today':''}" id="db-${k}">
+        <div class="day-block-header" onclick="toggleCollapse('${k}')">
+          <div>
+            <span class="day-name-ar">${DAYS_AR[d.getDay()]}</span>
+            <span class="day-date-str" style="margin-right:6px">${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="day-score-badge" onclick="event.stopPropagation();openScore('${k}','${DAYS_AR[d.getDay()]}')">${score!==undefined?score+'%':'نتيجة'}</span>
+            <span class="day-collapse-btn">▾</span>
+          </div>
+        </div>
+        <div class="day-body">
+          <ul class="task-list" id="dtl-${k}">
+            ${tasks.map((t,i)=>`
+              <li class="task-item ${t.done?'done':''}" onclick="toggleDT('${k}',${i})">
+                <div class="task-cb">${t.done?'✓':''}</div>
+                <span class="task-text">${t.text}</span>
+                ${t.pts?`<span class="task-pts">${t.pts}نق</span>`:''}
+                <span class="task-del" onclick="event.stopPropagation();deleteDT('${k}',${i})">✕</span>
+              </li>
+            `).join('') || '<li style="font-size:12px;color:var(--faint);padding:4px 6px">لا توجد مهام...</li>'}
+          </ul>
+          <div class="add-task-row" style="margin-top:6px">
+            <input type="text" placeholder="أضف مهمة..." id="dti-${k}" onkeydown="if(event.key==='Enter')addDT('${k}')">
+            <input type="number" class="pts-inp" id="dtp-${k}" placeholder="نق" min="1" max="99">
+            <button class="add-btn" onclick="addDT('${k}')">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleCollapse(k) {
+  document.getElementById(`db-${k}`).classList.toggle('collapsed');
+}
+function toggleDT(k,i) {
+  if(!D[k]) D[k]={};
+  if(!D[k].tasks) D[k].tasks=[];
+  D[k].tasks[i].done=!D[k].tasks[i].done;
+  save(); renderDays(); renderBars();
+}
+function deleteDT(k,i) { D[k].tasks.splice(i,1); save(); renderDays(); renderBars(); }
+function addDT(k) {
+  const ti=document.getElementById(`dti-${k}`);
+  const tp=document.getElementById(`dtp-${k}`);
+  if(!ti.value.trim()) return;
+  if(!D[k]) D[k]={};
+  if(!D[k].tasks) D[k].tasks=[];
+  D[k].tasks.push({text:ti.value.trim(),done:false,pts:parseInt(tp.value)||0});
+  ti.value=''; tp.value='';
+  save(); renderDays(); renderBars();
+}
+
+// ─── SCORE MODAL ───
+function openScore(k,name) {
+  scoreTarget=k;
+  document.getElementById('modalTitle').textContent='نتيجة '+name;
+  document.getElementById('scoreSlider').value=D[k]?.score||0;
+  document.getElementById('scoreNote').value=D[k]?.note||'';
+  updScore();
+  document.getElementById('scoreModal').classList.add('open');
+}
+function closeModal() { document.getElementById('scoreModal').classList.remove('open'); }
+function updScore() { document.getElementById('scoreDisplay').textContent=document.getElementById('scoreSlider').value+'%'; }
+function saveScore() {
+  if(!D[scoreTarget]) D[scoreTarget]={};
+  D[scoreTarget].score=parseInt(document.getElementById('scoreSlider').value);
+  D[scoreTarget].note=document.getElementById('scoreNote').value;
+  save(); closeModal(); renderDays(); renderBars();
+}
+document.getElementById('scoreModal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+// ─── HABITS ───
+function renderHabits() {
+  const dates = getWeekDates();
+  // headers
+  dates.forEach((d,i) => {
+    document.getElementById(`hh${i}`).textContent = DAYS_SH[d.getDay()];
+  });
+  const habits = D.habits || [];
+  const tbody = document.getElementById('habitBody');
+  tbody.innerHTML = habits.map((h,hi) => {
+    const cells = dates.map((d,di) => {
+      const k = `h_${wk()}_${hi}_${di}`;
+      const marked = D[k];
+      return `<td><div class="habit-cell ${marked?'marked':''}" onclick="toggleHabit('${k}')">${marked?'×':''}</div></td>`;
+    }).join('');
+    const weekDone = dates.filter((_,di)=>D[`h_${wk()}_${hi}_${di}`]).length;
+    return `
+      <tr>
+        <td><div class="habit-row-label">
+          <span>${h}</span>
+          <span style="font-size:10px;color:var(--faint);margin-right:auto">${weekDone}/7</span>
+        </div></td>
+        ${cells}
+        <td><span class="habit-del" onclick="deleteHabit(${hi})">✕</span></td>
+      </tr>
+    `;
+  }).join('') || `<tr><td colspan="9" style="font-size:12px;color:var(--faint);padding:12px;text-align:center">أضف أول عادة لك أدناه...</td></tr>`;
+
+  // summary chips
+  const summary = document.getElementById('habitSummary');
+  summary.innerHTML = habits.map((h,hi) => {
+    const done = dates.filter((_,di)=>D[`h_${wk()}_${hi}_${di}`]).length;
+    if(done===0) return '';
+    return `<span class="habit-chip">${h}: ${done}/7</span>`;
+  }).join('');
+}
+
+function toggleHabit(k) { D[k]=!D[k]; save(); renderHabits(); }
+function addHabit() {
+  const inp = document.getElementById('newHabitInp');
+  if(!inp.value.trim()) return;
+  if(!D.habits) D.habits=[];
+  D.habits.push(inp.value.trim());
+  inp.value='';
+  save(); renderHabits();
+}
+function deleteHabit(i) {
+  D.habits.splice(i,1);
+  save(); renderHabits();
+}
+
+// ─── BARS ───
+function renderBars() {
+  const dates = getWeekDates();
+  document.getElementById('barsWrap').innerHTML = dates.map(d => {
+    const k=dk(d);
+    const score = D[k]?.score ?? null;
+    const pts = (D[k]?.tasks||[]).filter(t=>t.done).reduce((a,b)=>a+(b.pts||0),0);
+    const val = score!==null ? score : Math.min(100,pts*10);
+    const cls = val>=70?'hi':val>=40?'md':'lo';
+    return `
+      <div class="bar-row">
+        <div class="bar-day">${DAYS_SH[d.getDay()]}</div>
+        <div class="bar-track"><div class="bar-fill ${cls}" style="width:${val}%"></div></div>
+        <div class="bar-val">${val}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── SLEEP ───
+function renderSleep() {
+  const dates = getWeekDates();
+  document.getElementById('sleepInputs').innerHTML = dates.map(d => {
+    const k=dk(d);
+    const bed=D[k]?.bed||'', wake=D[k]?.wake||'';
+    const hrs=calcHrs(bed,wake);
+    return `
+      <div class="si-col">
+        <label>${DAYS_SH[d.getDay()]}</label>
+        <input type="time" value="${bed}" title="نوم" onchange="setSleep('${k}','bed',this.value)">
+        <input type="time" value="${wake}" title="استيقاظ" onchange="setSleep('${k}','wake',this.value)">
+        <div class="si-hrs">${hrs!==null?hrs+'h':'—'}</div>
+      </div>
+    `;
+  }).join('');
+  drawCurve();
+}
+function setSleep(k,f,v) { if(!D[k])D[k]={}; D[k][f]=v; save(); renderSleep(); }
+function calcHrs(b,w) {
+  if(!b||!w) return null;
+  const [bh,bm]=b.split(':').map(Number), [wh,wm]=w.split(':').map(Number);
+  if(isNaN(bh)) return null;
+  let m=(wh*60+wm)-(bh*60+bm); if(m<0)m+=1440;
+  return (m/60).toFixed(1);
+}
+function drawCurve() {
+  const canvas=document.getElementById('sleepCanvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const dates=getWeekDates();
+  const hrs=dates.map(d=>{ const h=calcHrs(D[dk(d)]?.bed,D[dk(d)]?.wake); return h?parseFloat(h):null; });
+  const valid=hrs.filter(h=>h!==null);
+  if(valid.length<2){
+    ctx.fillStyle='#b8ae9c'; ctx.font='12px Tajawal'; ctx.textAlign='center';
+    ctx.fillText('أدخل أوقات النوم لرؤية المنحنى',W/2,H/2); return;
+  }
+  const pad={t:14,b:20,l:4,r:20}, gW=W-pad.l-pad.r, gH=H-pad.t-pad.b, step=gW/6;
+  [4,6,8,10].forEach(h=>{
+    const y=pad.t+gH-((h-0)/(12-0)*gH);
+    ctx.strokeStyle='rgba(180,168,148,.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#9a8f80'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='left';
+    ctx.fillText(h+'h',W-pad.r+2,y+3);
+  });
+  const pts=dates.map((d,i)=>({x:pad.l+i*step, y:pad.t+gH-((hrs[i]||0)/12*gH), v:hrs[i]!==null}));
+  ctx.beginPath(); ctx.strokeStyle='#2c5f8a'; ctx.lineWidth=2;
+  let s=false;
+  pts.forEach(p=>{ if(!p.v)return; if(!s){ctx.moveTo(p.x,p.y);s=true;}else ctx.lineTo(p.x,p.y); });
+  ctx.stroke();
+  const fv=pts.find(p=>p.v), lv=[...pts].reverse().find(p=>p.v);
+  if(fv&&lv){
+    ctx.beginPath(); ctx.moveTo(fv.x,pad.t+gH);
+    pts.forEach(p=>{ if(p.v)ctx.lineTo(p.x,p.y); });
+    ctx.lineTo(lv.x,pad.t+gH); ctx.closePath();
+    ctx.fillStyle='rgba(44,95,138,.07)'; ctx.fill();
+  }
+  pts.forEach((p,i)=>{
+    if(!p.v) return;
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
+    ctx.fillStyle=hrs[i]>=7?'#2d6a4f':hrs[i]>=5?'#a07800':'#c0392b'; ctx.fill();
+    ctx.fillStyle='#4a3f2f'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(hrs[i]+'h',p.x,p.y-7);
+  });
+  dates.forEach((d,i)=>{
+    ctx.fillStyle='#9a8f80'; ctx.font='9px Tajawal'; ctx.textAlign='center';
+    ctx.fillText(DAYS_SH[d.getDay()],pad.l+i*step,H-3);
+  });
+}
+
+// ─── REVIEW ───
+function renderReview() {
+  ew();
+  ['achieved','mistakes','learned','notes'].forEach(cat=>{
+    const items=D[wk()][`rv_${cat}`]||[];
+    document.getElementById(`rv-${cat}`).innerHTML=items.map((txt,i)=>`
+      <div class="review-item">
+        <span class="review-bullet">—</span>
+        <input class="review-inp" value="${txt}" placeholder="اكتب هنا..." onblur="updRv('${cat}',${i},this.value)">
+      </div>
+    `).join('');
+  });
+}
+function addRv(cat) {
+  ew();
+  if(!D[wk()][`rv_${cat}`]) D[wk()][`rv_${cat}`]=[];
+  D[wk()][`rv_${cat}`].push('');
+  save(); renderReview();
+  const inps=document.getElementById(`rv-${cat}`).querySelectorAll('input');
+  if(inps.length) inps[inps.length-1].focus();
+}
+function updRv(cat,i,v) { ew(); D[wk()][`rv_${cat}`][i]=v; save(); }
+
+// ─── SIDE TASKS ───
+function renderSide() {
+  ['research','shopping','urgent'].forEach(cat=>{
+    const tasks=D[`side_${cat}`]||[];
+    renderTaskList(`tl-${cat}`, tasks, `toggleSide_${cat}`, `deleteSide_${cat}`);
+  });
+}
+['research','shopping','urgent'].forEach(cat=>{
+  window[`toggleSide_${cat}`]=i=>{ D[`side_${cat}`][i].done=!D[`side_${cat}`][i].done; save(); renderSide(); };
+  window[`deleteSide_${cat}`]=i=>{ D[`side_${cat}`].splice(i,1); save(); renderSide(); };
+});
+function addSide(cat) {
+  const ti=document.getElementById(`ti-${cat}`);
+  if(!ti.value.trim()) return;
+  if(!D[`side_${cat}`]) D[`side_${cat}`]=[];
+  D[`side_${cat}`].push({text:ti.value.trim(),done:false});
+  ti.value=''; save(); renderSide();
+}
+
+// ─── TAB SWITCH ───
+function sw(name, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='stats'){ renderBars(); renderSleep(); }
+  if(name==='habits') renderHabits();
+  if(name==='invest') renderInvest();
+  if(name==='bars') renderCustomBars();
+  if(name==='review') renderReview();
+  if(name==='side') renderSide();
+}
+
+// ─── INVESTMENT TRACKER ───
+let monthOffset = 0;
+
+function getMonthYear() {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  return { year: d.getFullYear(), month: d.getMonth() };
+}
+
+function changeMonth(delta) { monthOffset += delta; renderInvest(); }
+
+function renderInvest() {
+  const { year, month } = getMonthYear();
+  const today = new Date();
+  document.getElementById('monthLabel').textContent =
+    MONTHS[month] + ' ' + year;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const mkKey = d => `inv_${year}_${month}_${d}`;
+
+  // Count paid days
+  let paid = 0;
+  for(let d=1; d<=daysInMonth; d++) { if(D[mkKey(d)]) paid++; }
+  const isCurrentMonth = today.getFullYear()===year && today.getMonth()===month;
+  const todayNum = isCurrentMonth ? today.getDate() : daysInMonth+1;
+  const remaining = daysInMonth - todayNum + (isCurrentMonth?1:0);
+
+  document.getElementById('invPaid').textContent = paid;
+  document.getElementById('invTotal').textContent = (paid * 20) + ' دج';
+  document.getElementById('invLeft').textContent = Math.max(0, remaining);
+
+  // Build calendar
+  let cells = '';
+  // Empty cells before first day
+  for(let i=0; i<firstDay; i++) cells += `<div class="inv-day empty"></div>`;
+
+  for(let d=1; d<=daysInMonth; d++) {
+    const isToday = today.getDate()===d && isCurrentMonth;
+    const isFuture = isCurrentMonth && d > today.getDate();
+    const isPaid = !!D[mkKey(d)];
+    const cls = [
+      'inv-day',
+      isPaid ? 'paid' : '',
+      isToday ? 'today-inv' : '',
+      isFuture ? 'future' : ''
+    ].filter(Boolean).join(' ');
+    const click = isFuture ? '' : `onclick="toggleInvDay(${d})"`;
+    cells += `
+      <div class="${cls}" ${click}>
+        <div class="inv-day-num">${d}</div>
+        <div class="inv-x">✕</div>
+      </div>`;
+  }
+  document.getElementById('investCal').innerHTML = cells;
+}
+
+function toggleInvDay(d) {
+  const { year, month } = getMonthYear();
+  const k = `inv_${year}_${month}_${d}`;
+  D[k] = !D[k];
+  save(); renderInvest();
+}
+
+// ─── CUSTOM BARS ───
+function renderCustomBars() {
+  ew();
+  if(!D[wk()].cbars) D[wk()].cbars = [
+    {name:'', pct:0, note:''},
+    {name:'', pct:0, note:''},
+    {name:'', pct:0, note:''},
+    {name:'', pct:0, note:''}
+  ];
+  const wrap = document.getElementById('customBarsWrap');
+  wrap.innerHTML = D[wk()].cbars.map((b,i) => {
+    const cls = b.pct>=70?'hi':b.pct>=40?'md':'lo';
+    return `
+      <div class="custom-bar-card">
+        <div class="cbar-header">
+          <input class="cbar-name" value="${b.name}" placeholder="اسم الشريط..." onblur="updateCBar(${i},'name',this.value)">
+          <div class="cbar-pct">${b.pct}%</div>
+        </div>
+        <div class="cbar-track">
+          <div class="cbar-fill ${cls}" style="width:${b.pct}%"></div>
+        </div>
+        <input type="range" class="cbar-slider" min="0" max="100" value="${b.pct}"
+          oninput="updateCBar(${i},'pct',parseInt(this.value));renderCustomBars()">
+        <input class="cbar-note" value="${b.note}" placeholder="ملاحظة..." onblur="updateCBar(${i},'note',this.value)">
+      </div>
+    `;
+  }).join('');
+}
+
+function updateCBar(i, field, val) {
+  ew();
+  if(!D[wk()].cbars) return;
+  D[wk()].cbars[i][field] = field==='pct' ? parseInt(val) : val;
+  save();
+  if(field!=='pct') renderCustomBars();
+}
+
+
+function clearAllData() {
+  if(confirm('سيتم مسح جميع البيانات. هل أنت متأكد؟')) {
+    localStorage.clear();
+    D = {};
+    renderAll();
+    alert('تم المسح! الصفحة جاهزة من جديد ✓');
+  }
+}
+
+// ─── INIT ───
+function renderAll() {
+  updateWeekLabel();
+  renderPlan();
+  renderDays();
+  renderBars();
+}
+renderAll();
+</script>
+</body>
+</html>
